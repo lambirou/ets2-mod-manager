@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "package": "electron-packager . ETS2-Mod-Manager --platform=win32 --arch=x64 --out=dist --overwrite --ignore=^/dist --ignore=^/test --ignore=^/docs --ignore=^/scripts --ignore=^/artifacts --ignore=^/tools/scs_packer.zip --ignore=steam-response.tmp.html"
+    "package": "node scripts/package.cjs"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
