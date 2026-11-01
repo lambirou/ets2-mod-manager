@@ -13,6 +13,19 @@ const assert = require("node:assert/strict");
     path.join(mods, "sample", "manifest.sii"),
     'SiiNunit\n{mod_package : .test {\ndisplay_name: "Camion de vérification"\ncompatible_versions[]: "1.61.*"\n}}',
   );
+  const fixtures = [
+    ["map", "Extension de carte — test", "map", "1.61.*", "Équipe Cartographie", "2.4"],
+    ["sound", "Sons moteur — test", "sound", "1.60.*", "Atelier Audio", "1.8"],
+    ["graphics", "Éclairage et météo — test", "graphics", "", "Studio Environnement", "3.0"],
+    ["trailer", "Remorques et chargements — test", "trailer", "1.61.*", "Atelier Transport", "1.2"],
+    ["traffic", "Trafic routier — test", "ai_traffic", "1.61.*", "Atelier Simulation", "2.0"],
+  ];
+  for (const [folder, name, category, compatible, author, version] of fixtures) {
+    const directory = path.join(mods, folder);
+    await fs.mkdir(directory);
+    await fs.writeFile(path.join(directory, "manifest.sii"),
+      `SiiNunit\n{mod_package : .test {\ndisplay_name: "${name}"\ncategory[]: "${category}"\nauthor: "${author}"\npackage_version: "${version}"\n${compatible ? `compatible_versions[]: "${compatible}"` : ""}\n}}`);
+  }
   await fs.writeFile(
     path.join(data, "state.json"),
     JSON.stringify({
@@ -38,27 +51,71 @@ const assert = require("node:assert/strict");
     await fs.mkdir("artifacts", { recursive: true });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    const consoleErrors = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") consoleErrors.push(message.text());
+    });
     await page
       .getByRole("heading", { name: "Camion de vérification" })
       .waitFor();
-    await page.getByRole("button", { name: "Détails", exact: true }).click();
-    await page.locator("#detail").waitFor({ state: "visible" });
-    assert.match(await page.locator("#detail-body").innerText(), /1.61/);
+    assert.equal(await page.getByRole("table", { name: "Bibliothèque des mods" }).count(), 1);
+    await page.getByRole("button", { name: "Détails", exact: true }).first().click();
+    const detail = page.getByRole("complementary", { name: "Détails du mod" });
+    await detail.waitFor({ state: "visible" });
+    assert.match(await detail.innerText(), /1\.61/);
+    assert.equal(await page.getByRole("button", { name: "Importer", exact: true }).isEnabled(), true);
     await page.waitForTimeout(250);
     await page.screenshot({ path: "artifacts/detail.png" });
-    await page.locator("#close-detail").click();
-    await page.getByRole("button", { name: "+ Configuration" }).click();
-    await page.locator('[data-view="builds"]').click();
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1050, 700));
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    const footerBox = await page.locator(".statusbar").boundingBox();
+    assert.ok(footerBox && footerBox.y + footerBox.height <= await page.evaluate(() => window.innerHeight));
+    const addButton = page.getByRole("button", { name: "+ Configuration" }).first();
+    const addBox = await addButton.boundingBox();
+    const paneBox = await detail.boundingBox();
+    assert.ok(addBox && paneBox && addBox.x + addBox.width <= paneBox.x);
+    await page.screenshot({ path: "artifacts/library-compact.png" });
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1450, 940));
+    await detail.getByRole("button", { name: "Fermer" }).last().click();
+    await page.getByRole("button", { name: "Détails", exact: true }).first().click();
+    await page.keyboard.press("Escape");
+    await detail.waitFor({ state: "hidden" });
+    await page.getByRole("textbox", { name: "Rechercher un mod" }).fill("introuvable");
+    await page.getByText("Aucun résultat").waitFor();
+    await page.getByRole("textbox", { name: "Rechercher un mod" }).fill("");
+    await page.getByRole("button", { name: "+ Configuration" }).first().click();
+    await page.getByRole("button", { name: "+ Configuration" }).first().click();
+    await page.getByText(/déjà dans/).waitFor();
+    await page.getByRole("button", { name: "Masquer le message" }).click();
+    await page.getByRole("button", { name: "Mes configurations" }).click();
     await page.waitForTimeout(250);
     await page.screenshot({ path: "artifacts/builds.png" });
     await page.getByRole("button", { name: "Nouvelle", exact: true }).click();
     await page.locator("#name-input").fill("Test de persistance");
-    await page.locator('#name-dialog button[value="ok"]').click();
+    await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
     await page.getByRole("button", { name: "Renommer", exact: true }).waitFor();
-    await page.locator('[data-view="library"]').click();
+    await page.getByRole("button", { name: "Mes mods" }).click();
     await page.waitForTimeout(350);
     await page.screenshot({ path: "artifacts/library.png" });
+    await page.getByRole("button", { name: "Découvrir" }).click();
+    await page
+      .getByRole("heading", { name: "Découvrir" })
+      .waitFor();
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: "artifacts/discover.png" });
+    await page.getByRole("button", { name: "Paramètres" }).click();
+    await page
+      .getByRole("heading", { name: "Paramètres" })
+      .waitFor();
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: "artifacts/settings.png" });
+    await page.getByRole("button", { name: "Mes mods" }).click();
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: "artifacts/library-light.png" });
     assert.deepEqual(errors, []);
+    assert.deepEqual(consoleErrors, []);
     await app.close();
     app = null;
     const saved = JSON.parse(

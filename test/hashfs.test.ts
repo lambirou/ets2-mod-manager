@@ -1,11 +1,12 @@
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs/promises");
-const os = require("node:os");
-const path = require("node:path");
-const { promisify } = require("node:util");
-const { execFile } = require("node:child_process");
-const { analyzeHashFS } = require("../src/hashfs.cjs");
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
+import { execFile } from "node:child_process";
+import { analyzeHashFS } from "../src/main/hashfs";
+
 test("création et analyse réelle d’une archive HashFS v2 avec l’outil SCS", async (t) => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "ets2-hashfs-"));
   t.after(() => fs.rm(dir, { recursive: true, force: true }));
@@ -15,8 +16,8 @@ test("création et analyse réelle d’une archive HashFS v2 avec l’outil SCS"
     path.join(root, "manifest.sii"),
     'SiiNunit\n{mod_package : .x {\ndisplay_name: "HashFS vérifié"\ncompatible_versions[]: "1.61.*"\n}}',
   );
-  const packer = path.resolve("tools/scs_packer.exe"),
-    file = path.join(dir, "sample.scs");
+  const packer = path.resolve("tools/scs_packer.exe");
+  const file = path.join(dir, "sample.scs");
   await promisify(execFile)(packer, ["create", file, "-root", root], {
     windowsHide: true,
   });

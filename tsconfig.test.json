@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "rootDir": ".",
+    "outDir": "dist/test",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["test/**/*.ts", "src/main/**/*.ts", "src/shared/**/*.ts"]
+}

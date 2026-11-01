@@ -1,12 +1,21 @@
 {
   "name": "ets2-mod-manager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "main": "src/main.cjs",
+  "main": "dist/main/main.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
-    "start": "electron .",
-    "test": "node --test",
-    "package": "node scripts/package.cjs"
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "build": "npm run build:main && npm run build:renderer",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron .",
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
+    "test": "npm run build:main && tsc -p tsconfig.test.json && node --test dist/test/test",
+    "ui-smoke": "node scripts/ui-smoke.cjs",
+    "package": "npm run build && node scripts/package.cjs"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
@@ -14,7 +23,18 @@
   },
   "devDependencies": {
     "@electron/packager": "^20.3.0",
+    "@fluentui/react-components": "^9.75.0",
+    "@fluentui/react-icons": "^2.0.345",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/yauzl": "^3.4.0",
+    "@vitejs/plugin-react": "^6.1.2",
     "electron": "^45.1.0",
-    "playwright-core": "^1.64.1"
+    "playwright-core": "^1.64.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
   }
 }

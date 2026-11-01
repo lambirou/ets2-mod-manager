@@ -1,4 +1,6 @@
-function clean(text) {
+import type { CompatState, ModCheck, ModRecord } from "../shared/types";
+
+export function clean(text: string): string {
   return text
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .split(/\r?\n/)
@@ -7,7 +9,8 @@ function clean(text) {
     )
     .join("\n");
 }
-function values(text, key) {
+
+export function values(text: string, key: string): string[] {
   return [
     ...clean(text).matchAll(
       new RegExp(
@@ -15,9 +18,21 @@ function values(text, key) {
         "g",
       ),
     ),
-  ].map((m) => m[1].replace(/\\"/g, '"'));
+  ].map((match) => match[1].replace(/\\"/g, '"'));
 }
-function parseManifest(text) {
+
+export interface ManifestMetadata {
+  name?: string;
+  author?: string;
+  version?: string;
+  category: string;
+  versions: string[];
+  dlc: string[];
+  descriptionFile?: string;
+  icon?: string;
+}
+
+export function parseManifest(text: string): ManifestMetadata {
   return {
     name: values(text, "display_name")[0],
     author: values(text, "author")[0],
@@ -29,27 +44,32 @@ function parseManifest(text) {
     icon: values(text, "icon")[0],
   };
 }
-function matches(pattern, version) {
+
+export function matches(pattern: string, version: string): boolean {
   const actual = String(version).trim().replace(/s$/i, "").split(".");
   const parts = String(pattern).split(".");
-  if (!actual.every((p) => /^\d+$/.test(p))) return false;
+  if (!actual.every((part) => /^\d+$/.test(part))) return false;
   return (
     parts.every(
-      (p, i) =>
-        p === "*" ||
-        (/^\d+$/.test(p) &&
-          actual[i] !== undefined &&
-          Number(p) === Number(actual[i])),
-    ) &&
-    (parts.at(-1) === "*" || parts.length === actual.length)
+      (part, index) =>
+        part === "*" ||
+        (/^\d+$/.test(part) &&
+          actual[index] !== undefined &&
+          Number(part) === Number(actual[index])),
+    ) && (parts.at(-1) === "*" || parts.length === actual.length)
   );
 }
-function evaluate(mod, target, dlcs = []) {
-  const missing = (mod.dlc || []).filter((d) => !dlcs.includes(d));
-  const state =
+
+export function evaluate(
+  mod: Pick<ModRecord, "versions"> & Partial<Pick<ModRecord, "dlc" | "error">>,
+  target: string,
+  dlcs: string[] = [],
+): ModCheck {
+  const missing = (mod.dlc ?? []).filter((dlc) => !dlcs.includes(dlc));
+  const state: CompatState =
     mod.error || !mod.versions?.length
       ? "unknown"
-      : mod.versions.some((v) => matches(v, target))
+      : mod.versions.some((pattern) => matches(pattern, target))
         ? "compatible"
         : "incompatible";
   const reason =
@@ -59,4 +79,3 @@ function evaluate(mod, target, dlcs = []) {
       : `Versions déclarées : ${mod.versions.join(", ")}. Cible : ${target}.`);
   return { state, reason, missing, checkedAt: new Date().toISOString() };
 }
-module.exports = { clean, values, parseManifest, matches, evaluate };

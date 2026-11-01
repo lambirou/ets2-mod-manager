@@ -1,10 +1,17 @@
-const fs = require("node:fs/promises");
-const path = require("node:path");
-const crypto = require("node:crypto");
-const { promisify } = require("node:util");
-const { execFile } = require("node:child_process");
-const { readMod } = require("./packages.cjs");
-async function analyzeHashFS(mod, target, cache, packer) {
+import fs from "node:fs/promises";
+import path from "node:path";
+import crypto from "node:crypto";
+import { promisify } from "node:util";
+import { execFile } from "node:child_process";
+import { readMod } from "./packages";
+import type { ModRecord } from "../shared/types";
+
+export async function analyzeHashFS(
+  mod: Pick<ModRecord, "file" | "id" | "source">,
+  target: string,
+  cache: string,
+  packer: string,
+): Promise<ModRecord> {
   const handle = await fs.open(mod.file, "r");
   const magic = Buffer.alloc(4);
   try {
@@ -26,7 +33,7 @@ async function analyzeHashFS(mod, target, cache, packer) {
     await promisify(execFile)(
       packer,
       ["extract", mod.file, "-root", root, "-io-buffers-size", "64"],
-      { windowsHide: true, timeout: 600000, maxBuffer: 8 * 1024 * 1024 },
+      { windowsHide: true, timeout: 600_000, maxBuffer: 8 * 1024 * 1024 },
     );
     await fs.writeFile(marker, "ok");
   }
@@ -39,4 +46,3 @@ async function analyzeHashFS(mod, target, cache, packer) {
     analyzedFile: "HashFS extrait / " + (result.analyzedFile || "manifest.sii"),
   };
 }
-module.exports = { analyzeHashFS };

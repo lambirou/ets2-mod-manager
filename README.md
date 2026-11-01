@@ -1,6 +1,6 @@
-# ETS2 Mod Manager — version 0.1
+# ETS2 Mod Manager — version 0.2
 
-Application Windows en français. Code et documents dans ce dossier ; paramètres et sauvegardes dans le dossier utilisateur de l'application (AppData/Roaming/ets2-mod-manager).
+Application Windows en français, écrite en TypeScript avec une interface React et Fluent UI. Code et documents dans ce dossier ; paramètres et sauvegardes dans le dossier utilisateur de l'application (AppData/Roaming/ets2-mod-manager).
 
 ## Lancement
 
@@ -8,11 +8,19 @@ Ouvrir `dist/ETS2-Mod-Manager-win32-x64/ETS2-Mod-Manager.exe`. Garder tout le do
 
 Sur Windows 11, la fenêtre adopte le fond Mica et le thème clair ou sombre de Windows. Windows 10 conserve un fond opaque de repli et les mêmes surfaces acryliques.
 
-Développement : `npm ci`, puis `npm start`. Tests métier : `npm test`. Vérification de l'interface : `node scripts/ui-smoke.cjs`. Distribution : `npm run package`.
+Développement : `npm ci`, puis `npm start` (compile TypeScript et le rendu Vite avant de lancer Electron). Vérification des types : `npm run typecheck`. Tests métier : `npm test`. Vérification de l'interface : `npm run ui-smoke`. Distribution : `npm run package`.
+
+## Architecture
+
+- `src/main/` : processus principal Electron en TypeScript, accès aux fichiers, profils, HashFS et recherche réseau.
+- `src/main/preload.ts` : pont IPC isolé et typé (`contextIsolation`, `sandbox`).
+- `src/shared/types.ts` : contrats partagés entre le processus principal et le rendu.
+- `src/renderer/` : application React 19 avec Fluent UI React v9 (`FluentProvider`, boutons, champs, cartes, badges, dialogues Fluent).
+- `dist/main/` et `dist/renderer/` : sorties générées. Le rendu est assemblé par Vite, sans ressource distante.
 
 ## Fonctions disponibles
 
-- Interface Fluent 2 : fond Mica sur Windows 11, panneaux acryliques, texture de verre brossé, thème système et animations réduites si demandé.
+- Interface Fluent UI v9 sobre : bibliothèque en lignes, panneau de détails latéral non modal, navigation compacte, accent bleu et thèmes clair/sombre du système. Mica discret sur Windows 11 et animations réduites si demandé.
 - Détection du dossier utilisateur, de la version depuis le journal, de l'installation et des bibliothèques Steam usuelles ; chemins corrigeables.
 - Lecture des dossiers et ZIP/.scs ZIP, manifeste, miniature et description ; recherche par nom/auteur et filtres d'état/provenance.
 - HashFS : ouvrir la fiche du paquet et choisir « Analyser une archive HashFS ». Le Packer officiel extrait dans un cache local avant lecture. Une extraction peut être volumineuse et longue. La même archive réutilise ensuite son extraction tant que sa taille/date restent identiques. Le scan rapide signale le format comme non lu tant que cette analyse à la demande n'est pas lancée. Le Packer annonce la lecture de HashFS v1/v2 ; un test réel vérifie le parcours v2.
@@ -36,4 +44,4 @@ Le binaire local `tools/scs_packer.exe` a été téléchargé depuis la source o
 
 ## Validation
 
-Tests automatisés : versions, commentaires SII, métadonnées absentes, dossier de mod, archive corrompue, modification/restauration de profil, refus d'une restauration après modification concurrente et extraction réelle HashFS v2. Le test d'interface utilise un environnement temporaire et vérifie le scan, les détails, l'ajout à une configuration, la création et la persistance.
+Tests automatisés : versions, commentaires SII, métadonnées absentes, dossier de mod, archive corrompue, modification/restauration de profil, refus d'une restauration après modification concurrente et extraction réelle HashFS v2. Les tests et les sources métier sont compilés en TypeScript avant exécution. Le test d'interface lance Electron avec Fluent UI dans un environnement temporaire et vérifie le scan, les détails, l'ajout à une configuration, la création, la persistance, les vues Paramètres/Découvrir et le thème clair. Le même parcours a été exécuté sur l'exécutable packagé, et le Packer SCS de la distribution a relu une archive HashFS réelle.
