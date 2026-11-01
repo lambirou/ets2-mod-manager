@@ -38,6 +38,8 @@ const esc = (s) =>
         c
       ],
   );
+const icon = (name) =>
+  `<svg class="icon" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
 const size = (n) =>
   n > 1e9
     ? (n / 1e9).toFixed(2) + " Go"
@@ -47,9 +49,11 @@ const size = (n) =>
 function notice(s = "") {
   $("#notice").textContent = s;
 }
-function button(text, action, cls = "") {
+function button(text, action, cls = "", iconName = "") {
   const b = document.createElement("button");
-  b.textContent = text;
+  b.type = "button";
+  if (iconName) b.innerHTML = icon(iconName) + esc(text);
+  else b.textContent = text;
   b.className = cls;
   b.onclick = () => run(action);
   return b;
@@ -101,7 +105,28 @@ function detail(m) {
 function card(m) {
   const c = document.createElement("article");
   c.className = "card";
-  c.innerHTML = `${m.image ? '<img alt="" src="' + esc(m.image) + '">' : ""}<div class="card-top"><span class="category">${esc(categories[m.category] || m.category)}</span><span class="pill">${esc(m.source)}</span></div><h3>${esc(m.name)}</h3><p class="muted">${esc(m.version || "Version non renseignée")} · ${size(m.size)}<br>${esc((m.description || m.error || "Métadonnées du paquet").slice(0, 90))}</p><div><span class="badge ${check(m)}">${labels[check(m)]}</span></div>`;
+  c.innerHTML =
+    '<div class="card-media">' +
+    (m.image
+      ? '<img alt="" src="' + esc(m.image) + '">'
+      : '<div class="card-fallback">' + icon("package") + "</div>") +
+    '</div><div class="card-body"><div class="card-top"><span class="category">' +
+    esc(categories[m.category] || m.category) +
+    '</span><span class="pill">' +
+    esc(m.source) +
+    '</span></div><h3>' +
+    esc(m.name) +
+    '</h3><p class="muted">' +
+    esc(m.version || "Version non renseignée") +
+    " · " +
+    size(m.size) +
+    "<br>" +
+    esc((m.description || m.error || "Métadonnées du paquet").slice(0, 90)) +
+    '</p><div><span class="badge ' +
+    check(m) +
+    '">' +
+    labels[check(m)] +
+    "</span></div></div>";
   const a = document.createElement("div");
   a.className = "card-actions";
   a.append(
@@ -134,9 +159,13 @@ function render() {
     builds: "Mes configurations",
     settings: "Paramètres",
   }[view];
-  document
-    .querySelectorAll("[data-view]")
-    .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  document.querySelectorAll("[data-view]").forEach((b) => {
+    const active = b.dataset.view === view;
+    b.classList.toggle("active", active);
+    if (active) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
+  document.body.classList.toggle("is-scanning", scanning);
   ({
     library: library,
     discover: discover,
@@ -145,7 +174,7 @@ function render() {
   })[view](content);
 }
 function library(c) {
-  c.innerHTML = `<div class="summary"><div class="metric"><span>MODS INVENTORIÉS</span><strong>${mods.length}</strong></div><div class="metric"><span>DÉCLARÉS COMPATIBLES</span><strong>${mods.filter((m) => check(m) === "compatible").length}</strong></div><div class="metric"><span>À VÉRIFIER</span><strong>${mods.filter((m) => check(m) !== "compatible").length}</strong></div></div><div class="toolbar"><input id="local-query" placeholder="Rechercher un nom ou un auteur…" value="${esc(query)}"><select id="filter"><option value="">Tous les états</option>${Object.entries(
+  c.innerHTML = `<div class="summary"><div class="metric"><span class="metric-icon">${icon("package")}</span><div><span class="label">Mods inventoriés</span><strong>${mods.length}</strong></div></div><div class="metric"><span class="metric-icon">${icon("check")}</span><div><span class="label">Déclarés compatibles</span><strong>${mods.filter((m) => check(m) === "compatible").length}</strong></div></div><div class="metric"><span class="metric-icon">${icon("warning")}</span><div><span class="label">À vérifier</span><strong>${mods.filter((m) => check(m) !== "compatible").length}</strong></div></div></div><div class="toolbar"><input id="local-query" placeholder="Rechercher un nom ou un auteur…" value="${esc(query)}"><select id="filter"><option value="">Tous les états</option>${Object.entries(
     labels,
   )
     .map(
@@ -159,6 +188,8 @@ function library(c) {
     button(
       scanning ? "Annuler" : "Actualiser",
       scanning ? () => api.cancel() : scan,
+      "",
+      scanning ? "" : "refresh",
     ),
     button(
       "Importer",
@@ -167,6 +198,7 @@ function library(c) {
         await scan();
       },
       "primary",
+      "import",
     ),
   );
   const update = () => {
@@ -183,9 +215,11 @@ function library(c) {
     if (!list.length) {
       grid.className = "empty";
       grid.innerHTML =
-        "<strong>" +
+        '<div class="empty-icon">' +
+        icon(scanning ? "folder" : "package") +
+        "</div><strong>" +
         (scanning ? "Analyse de votre bibliothèque…" : "Aucun mod à afficher") +
-        "</strong>Choisissez votre dossier dans Paramètres ou importez un paquet .scs / .zip.";
+        "</strong><p>Choisissez votre dossier dans Paramètres ou importez un paquet .scs / .zip.</p>";
     } else {
       grid.className = "grid";
       list.forEach((m) => grid.append(card(m)));
@@ -229,7 +263,9 @@ function discover(c) {
   };
   if (!searchResults.length)
     $("#results").innerHTML =
-      '<div class="empty"><strong>Votre prochain mod commence ici.</strong>Steam Workshop · ETS2.lt · TruckyMods · ProMods<br><p>Résultats intégrés lorsque disponibles, accès au site sinon.</p></div>';
+      '<div class="empty"><div class="empty-icon">' +
+      icon("discover") +
+      '</div><strong>Votre prochain mod commence ici.</strong><p>Steam Workshop · ETS2.lt · TruckyMods · ProMods<br>Résultats intégrés lorsque disponibles, accès au site sinon.</p></div>';
   for (const s of searchResults) {
     const section = document.createElement("section");
     section.className = "source";
@@ -279,7 +315,9 @@ function builds(c) {
   const b = build();
   if (!b) {
     $("#build-rows").innerHTML =
-      '<div class="empty"><strong>Créez votre première configuration.</strong>Ajoutez ensuite vos mods depuis la bibliothèque.</div>';
+      '<div class="empty"><div class="empty-icon">' +
+      icon("builds") +
+      '</div><strong>Créez votre première configuration.</strong><p>Ajoutez ensuite vos mods depuis la bibliothèque.</p></div>';
     return;
   }
   $("#build-actions").append(

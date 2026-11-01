@@ -6,10 +6,13 @@ Application Windows en français. Code et documents dans ce dossier ; paramètre
 
 Ouvrir `dist/ETS2-Mod-Manager-win32-x64/ETS2-Mod-Manager.exe`. Garder tout le dossier de distribution : l'exécutable dépend des fichiers qui l'accompagnent. Aucun Node.js à installer pour cette distribution.
 
+Sur Windows 11, la fenêtre adopte le fond Mica et le thème clair ou sombre de Windows. Windows 10 conserve un fond opaque de repli et les mêmes surfaces acryliques.
+
 Développement : `npm ci`, puis `npm start`. Tests métier : `npm test`. Vérification de l'interface : `node scripts/ui-smoke.cjs`. Distribution : `npm run package`.
 
 ## Fonctions disponibles
 
+- Interface Fluent 2 : fond Mica sur Windows 11, panneaux acryliques, texture de verre brossé, thème système et animations réduites si demandé.
 - Détection du dossier utilisateur, de la version depuis le journal, de l'installation et des bibliothèques Steam usuelles ; chemins corrigeables.
 - Lecture des dossiers et ZIP/.scs ZIP, manifeste, miniature et description ; recherche par nom/auteur et filtres d'état/provenance.
 - HashFS : ouvrir la fiche du paquet et choisir « Analyser une archive HashFS ». Le Packer officiel extrait dans un cache local avant lecture. Une extraction peut être volumineuse et longue. La même archive réutilise ensuite son extraction tant que sa taille/date restent identiques. Le scan rapide signale le format comme non lu tant que cette analyse à la demande n'est pas lancée. Le Packer annonce la lecture de HashFS v1/v2 ; un test réel vérifie le parcours v2.

@@ -11,7 +11,7 @@ Le gestionnaire Quaaazi actuellement installé et les captures fournies servent 
 
 ## Décisions validées
 
-- Nouvelle application Windows avec une interface sombre.
+- Nouvelle application Windows avec une interface Fluent 2 : fond Mica sur Windows 11, thème clair ou sombre selon Windows et surfaces acryliques.
 - Trois espaces : Mes mods, Découvrir, Mes configurations.
 - Version cible du jeu toujours visible, détectée ou sélectionnée manuellement.
 - Recherche couvrant Steam Workshop, TruckyMods, ETS2.lt et les sites officiels des créateurs, dont ProMods.

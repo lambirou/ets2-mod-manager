@@ -6,7 +6,7 @@ Application Electron avec interface locale isolée, JavaScript, modules métier 
 
 1. Tests des versions SCS et de la lecture de manifestes ; moteur indépendant de l'interface.
 2. Inventaire local et Workshop, découverte des chemins Steam, états d'erreur par fichier.
-3. Interface sombre française, version cible, recherche et filtres, détail explicatif.
+3. Interface Fluent 2 française (Mica, thème système), version cible, recherche et filtres, détail explicatif.
 4. Connecteurs de recherche avec capacités explicites, liens de repli, import sans écrasement.
 5. Configurations persistantes, ordre, sauvegarde et application aux seuls profils texte vérifiables.
 6. Tests sur fichiers temporaires, scan local en lecture seule, vérification visuelle et exécutable autonome.

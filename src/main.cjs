@@ -5,6 +5,7 @@ const {
   dialog,
   shell,
   Menu,
+  nativeTheme,
 } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
@@ -197,12 +198,17 @@ app.whenReady().then(async () => {
       builds: [],
     }));
   Menu.setApplicationMenu(null);
+  nativeTheme.themeSource = "system";
+  const windowsBuild = Number(process.getSystemVersion().split(".")[2] || 0);
+  const micaAvailable =
+    process.platform === "win32" && windowsBuild >= 22000;
   win = new BrowserWindow({
     width: 1450,
     height: 940,
     minWidth: 1050,
     minHeight: 700,
-    backgroundColor: "#10151c",
+    backgroundColor: micaAvailable ? "#00000000" : "#1b1b1b",
+    ...(micaAvailable ? { backgroundMaterial: "mica" } : {}),
     title: "ETS2 Mod Manager",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
